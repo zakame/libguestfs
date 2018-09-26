@@ -112,10 +112,11 @@ class VmsService(object):
 # Create a background thread running a web server which is
 # simulating the imageio server.
 
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import SimpleHTTPServer
+import SocketServer
 import threading
 
-class RequestHandler(BaseHTTPRequestHandler):
+class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Content-type", "application/json; charset=UTF-8")
@@ -134,11 +135,12 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
 server_address = ("", 0)
-httpd = HTTPServer(server_address, RequestHandler)
+httpd = SocketServer.TCPServer(server_address, RequestHandler)
 imageio_port = httpd.server_address[1]
 
 def server():
     httpd.serve_forever()
 
-thread = threading.Thread(target = server, args = [], daemon = True)
+thread = threading.Thread(target = server, args = [])
+thread.daemon = True
 thread.start()
