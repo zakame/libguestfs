@@ -1,0 +1,38 @@
+#!/bin/sh
+
+PACKAGE=libguestfs
+ORIGPATH=$PWD
+
+cd $SLACKTRACKSCRATCHDIR
+cp -r $ORIGPATH/* .
+
+chown -R root:root .
+chmod -R og-w .
+
+./configure \
+    --prefix=/usr \
+    --libdir=/usr/lib64 \
+    --sysconfdir=/etc \
+    --disable-appliance \
+    --disable-daemon \
+    --disable-erlang \
+    --disable-golang \
+    --disable-lua \
+    --disable-php \
+    && make && make REALLY_INSTALL=yes INSTALLDIRS=vendor install
+
+DOCSDIR=/usr/doc/${PACKAGE}-${VERSION}
+mkdir -vpm755 $DOCSDIR
+cp -favv README COPYING COPYING.LIB $DOCSDIR
+
+mv /usr/doc/${PACKAGE}/* $DOCSDIR
+rm -fr /usr/doc/${PACKAGE}
+
+if [ -r ChangeLog ]; then
+  cat ChangeLog | head -n 1000 > $DOCSDIR/ChangeLog
+  touch -r ChangeLog $DOCSDIR/ChangeLog
+fi
+
+rm -fr /install
+mkdir -vpm755 /install
+cat ${ORIGPATH}/slack-desc > /install/slack-desc
